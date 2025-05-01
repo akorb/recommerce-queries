@@ -9,23 +9,20 @@ test_eans = ['3608964290', '9783608939842']
 offers = query_offers(test_eans)
 print(offers)
 
-# Prints: [20.88, 12.19]
+# Example output: [20.88, 12.19]
 ```
 
 
 ### Momox
 
-Here an authentication is required to be able to access the API.
-
 Example code:
 
 ```python
-from momox import get_authentication_cookies, query_offers
+from momox import query_offers
 
 test_eans = ['3608964290', '9783608939842']
-cookies = get_authentication_cookies('your-email-address', 'your-password')
-offers = query_offers(test_eans, cookies)
+offers = query_offers(test_eans)
 print(offers)
 
-# Prints: [37.77, 10.46]
+# Example output: [37.77, 10.46]
 ```

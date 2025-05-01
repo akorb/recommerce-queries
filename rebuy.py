@@ -1,30 +1,22 @@
+from typing import Optional
 import requests
 
-from pyquery import PyQuery
+
+def get_price_from_response(json_response: dict, ean: str) -> Optional[float]:
+    for purchsable in json_response['purchasable']:
+        if ean in purchsable['product']['identifiers_ean'] or \
+           ean in purchsable['product']['identifiers_isbn']:
+            return purchsable['product']['price_purchase'] / 100
+
+    return None
 
 
-def get_token() -> tuple[str, str]:
-    response = requests.get('https://www.rebuy.de/verkaufen/bulk-isbn')
-    html = response.text
-    pq = PyQuery(html)
+def query_offers(eans: list[str]) -> list[Optional[float]]:
+    response = requests.post('https://www.rebuy.de/verkaufen/api/bulk-isbn',
+                             json={'identifiers': "\r\n".join(eans)},
+                             headers={'X-Requested-With': 'XMLHttpRequest'})
 
-    search_token = pq('#isbn_product_search__token')[0].value
-    php_session_id = response.cookies['PHPSESSID']
-    return search_token, php_session_id
+    json: dict = response.json()
 
-
-def query_offers(eans: list[str], token=get_token()) -> list[float]:
-    search_token, php_session_id = token
-    data = {'isbn_product_search[identifiers]': "\r\n".join(eans),
-            'isbn_product_search[_token]': search_token}
-
-    response = requests.post('https://www.rebuy.de/verkaufen/bulk-isbn',
-                             data=data,
-                             cookies={'PHPSESSID': php_session_id})
-
-    html = response.text
-    pq = PyQuery(html)
-
-    offers = [float(elem.text.strip().split()[0].replace(',', '.'))
-              for elem in pq('div[class="pull-right ry-cart-item__price ry-cart-item__price--bulk-isbn-result"]')]
-    return offers
+    prices = [get_price_from_response(json, ean) for ean in eans]
+    return prices
